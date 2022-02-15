@@ -1,0 +1,237 @@
+---
+title: "HIGH DIMENSIONAL DATA ANALYSIS (HDDA)"
+author: "Danielle KAPSA"
+date: "12/28/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## PROJET IN HIGH DIMENSIONAL DATA ANALYSIS 2021 
+
+
+In this part, we will apply  multiple Linear Regression and  PCA  using a real dataset with R SOFTWARE.
+
+### Download Data
+
+We download data from the file HDDAdataexam2021.csv. 
+```{r}
+data <-read.csv2("file:///home/danielle/Documents/HDA/HDDAdataexam21.csv", 
+                 header = TRUE, sep = ',', dec = ',', stringsAsFactors = TRUE)
+head(data)
+```
+
+
+### Description of the Data
+```{r}
+dim(data)
+```
+```{r}
+data$LowInstagram<-ifelse(data$InstagramRatio < 0.5, 1, 0)
+data$HighInstagram<-ifelse(data$InstagramRatio > 2 , 1, 0)
+```
+```{r}
+head(data)
+```
+
+Our initial data contains 369 rows and 5 variables. 
+Using the previous command we add 2 columns LowInstagram and HighInstagram.
+```{r}
+summary(data)
+```
+
+### Linear Regression
+Let perform the multiple linear regression with phone as the dependent variable and SocialNetworks, Happiness, walk, LowInstagram and HighINstagram as predictors variables. 
+
+```{r}
+model1 <- lm(Phone ~ SocialNetworks + Happiness+ Walk+LowInstagram+HighInstagram, data = data)
+summary(model1)
+```
+
+We observe that the p-value of F-statistic is < 2.2e-16 which is significant. It show that at least one of the predictors variables is significantly related to the outcome variable. 
+
+#### Question 4
+In the regression of 1), the SocialNetworks is significantly influence the Prediction of the variable Phone, 
+Justification: The P-value associated to the SocialNetworks variable is < 2e-16 which is significant. So when the SocialNetworks increases by one unit, the number of minutes an AIMS student spends on the screen of his/her phone per days increases by 0.91076 units. 
+
+
+
+#### Question 5
+
+According to the regression in 1) the Happiness help to reduce the time AIM students spend on their phone because the estimate coefficient is negative (-7.395)  and the variable is significantly. 
+
+#### Question 6 
+
+Prediction of students A and B 
+```{r}
+SocialNetworks<-c(120, 120)
+Happiness<-c(4,4)
+Walk<-c(15, 15)
+InstagramRatio<-c(2.1,0.4)
+LowInstagram<-c(0,1)
+HighInstagram<-c(1,0)
+new_data2<-data.frame(SocialNetworks, Happiness, Walk, InstagramRatio, LowInstagram, HighInstagram)
+```
+
+
+```{r}
+new_data2
+```
+
+```{r}
+#Prediction
+predict(model1, newdata = new_data2)
+```
+
+#### Question 7 
+
+Backward stepwise regression.
+```{r}
+summary(model1)
+```
+We remove the non significantly variable. we begin by model2 which represent the model without LowInstagram
+```{r}
+model2 = lm(Phone ~ SocialNetworks + Happiness+ Walk+ HighInstagram, data = data)
+summary(model2)
+```
+model3 which represent the model without LowInstagram and Walk
+```{r}
+model3 = lm(Phone ~ SocialNetworks + Happiness+ HighInstagram, data = data)
+summary(model3)
+```
+We have 3 significantly variables: SocialNetworks, Happiness and HighInstagram. 
+
+#### Question 8 
+
+
+In the first model the Adjusted R-squared is 0.5277 it means that the model is able to determine 52,77% of the points distribution. 
+In the last model the Adjusted R-squared is 0.5275 it means that the model is able to determine 52,36% of the points distribution. 
+Since both have the same adjusted R-squared we keep the last model as model with  the most significantly predictor. 
+
+### Question 9
+
+Prediction
+
+```{r}
+SocialNetworks<-c(30, 30)
+Happiness<-c(8,8)
+Walk<-c(2, 2)
+InstagramRatio<-c(2.1,0.4)
+LowInstagram<-c(0,1)
+HighInstagram<-c(1,0)
+new_data3<-data.frame(SocialNetworks, Happiness, Walk, InstagramRatio, LowInstagram, HighInstagram)
+```
+```{r}
+predict(model3, newdata = new_data3)
+```
+
+
+### Principal Component Analysis
+```{r}
+library('FactoMineR')
+library('factoextra')
+library('corrplot')
+```
+```{r}
+datapca <-read.csv2("file:///home/danielle/Documents/HDA/HDDAdataexam21.csv", 
+                    header = TRUE, sep = ',', dec = ',', stringsAsFactors = TRUE)
+```
+
+```{r}
+mypca<-PCA(datapca, graph = FALSE, scale.unit = TRUE)
+```
+#### Chosen principal axes. 
+```{r}
+eigenvalues=mypca$eig
+eigenvalues
+```
+The first four principal axes explain 94% of the inertia. So for analyse we will keep the first for as our principal axes. 
+
+
+#### The variables 
+```{r}
+mypca.var=mypca$var
+mypca.var
+```
+
+#### Correlation Analysis 
+```{r}
+var<-get_pca_var(mypca)
+```
+```{r}
+m=cor(datapca)
+corrplot(m, type = 'upper', method='pie')
+```
+We observe that SocialNetwork is highly correlated to Phone. 
+
+
+#### Quality of representation on axis
+```{r}
+head(var$cos2)
+```
+
+
+```{r}
+corrplot(var$cos2, method = 'circle', is.corr = FALSE,
+         col = colorRampPalette(c( "#D1E5F0", "#92C5DE", "#4393C3", "#2166AC", "#053061"))(200))
+```
+According to the figure the Phone and SocialNetworks are well represented on Dim 1. Walk is well represented on Dim 2. 
+
+### Contribution of variables
+
+```{r}
+head(var$contrib)
+```
+```{r}
+corrplot(var$cos2, method = 'pie', is.corr = FALSE, 
+         col = colorRampPalette(c( "#D1E5F0", "#92C5DE", "#4393C3", "#2166AC", "#053061"))(200))
+```
+On dimension 1, SocialNetworks and Phone contribute the most. Happiness contribute the most on dimension 2 and 3. On dimension 3 Walk contribute the most and InstagramRatio contribute on dimension 2 and 4 
+
+#### Correlation circle. 
+
+```{r}
+fviz_pca_var(mypca, col.var = "cos2",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE 
+             )
+```
+
+
+The graph show that on Dim1 Phone and SocialNetworks are positively correlated , Happiness and Walk are negatively correlated, InstagramRatio is positively correlated. On the this axis the Phone and SocialNetworks  variables are well represented.
+On Dim2 Happiness, Walk, SocialNetworks and Phone are positively correlated. InstagramRatio is negatively correlated. On this axis Happiness, Walk and InstagramRatio are well represented. 
+
+
+### Quality of representation of the individuals 
+```{r}
+fviz_pca_ind(mypca, col.ind = 'cos2', gradient.cols = c("#D1E5F0", "#92C5DE", "#4393C3", "#2166AC", "#053061"), repel = TRUE)
+```
+
+Due to the fat that many individuals are similar we can see the are to close to the center. 
+```{r}
+fviz_pca_biplot(mypca, repel = TRUE, col.var = "99865B", 
+                col.ind = "#876534", alpha.var='contrib', alpha.ind='contrib')
+```
+
+
+```{r}
+fviz_contrib(mypca, choice = 'ind', axes = 1:2, top = 15, col = 'black')
+```
+All the individual representedd on the absicese have contribution because these contribution are high than the average contribution
+
+
+### Representation of the most impotant individuals. 
+```{r}
+fviz_pca_biplot(mypca, repel = TRUE, select.ind = list(contrib = 20), select.var = list (contrib = 5), 
+                ggtheme = theme_minimal(), col.var = "99865B", col.ind = "#876534", alpha.var='contrib')
+
+```
+References:
+http://www.sthda.com/french/articles/38-methodes-des-composantes-principales-dans-r-guide-pratique/73-acp-analyse-en-composantes-principales-avec-r-l-essentiel/
+
+
+http://www.sthda.com/english/wiki/visualize-correlation-matrix-using-correlogram
